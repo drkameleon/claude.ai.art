@@ -1,8 +1,10 @@
 import ./"../src/api.art"!
 
-response: chat [
+apiKey: arg\0
+
+response: chat .key: apiKey [
     createMessage "user" "What is 2+2?"
-] .key: "sk-your-api-key"
+] 
 
 inspect response
 print response\content
