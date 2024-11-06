@@ -16,13 +16,30 @@
 
 define :message [
     init: constructor [role :string content :string][
-        this\role: role
-        this\content: content
+        \role: role
+        \content: content
+
+        if not? in? \role ["user" "assistant"] ->
+            throw.as: valueError "Message role must be 'user' or 'assistant'"
     ]
 ]
 
-define :claudeClient [
-    init: constructor [key :string][
+;--------------------------
+; Helper Functions
+;--------------------------
+
+createMessage: function [role :string content :string][
+    ;; description: « Create a new message object
+    ;; returns: :message
+    to :message [role content]
+]
+
+;--------------------------
+; Main implementation
+;--------------------------
+
+define :claudeAPI [
+    init: method [key :string][
         if null? key [ 
             throw.as: valueError "API key is required"
         ]
@@ -30,30 +47,18 @@ define :claudeClient [
             throw.as: valueError "Invalid API key format - must start with 'sk-'"
         ]
 
-        this\apiKey: key
-        this\baseUrl: "https://api.anthropic.com"
-        this\apiVersion: "2023-06-01"
-        this\model: "claude-3-sonnet-20240229"
-        this\maxTokens: 4096
+        \apiKey: key
+        \baseUrl: "https://api.anthropic.com"
+        \apiVersion: "2023-06-01"
+        \model: "claude-3-sonnet-20240229"
+        \maxTokens: 4096
 
         ; default parameters
-        this\defaultTemp: 0.7
-        this\defaultTopP: 1.0
+        \defaultTemp: 0.7
+        \defaultTopP: 1.0
     ]
 
-    validateMessage: method [msg :message][
-        if not? key? msg 'role [
-            throw.as: valueError "Message must have a 'role' field"
-        ]
-        if not? key? msg 'content [
-            throw.as: valueError "Message must have a 'content' field"
-        ]
-        if not? in? msg\role ["user" "assistant"] [
-            throw.as: valueError "Message role must be 'user' or 'assistant'"
-        ]
-    ]
-
-    chat: method [messages :block][
+    chat: method [blk :block][
         ;; description: « Send a chat request to Claude's API
         ;; options: [
         ;;     model: :string « specify Claude model to use (default: claude-3-sonnet)
@@ -65,23 +70,23 @@ define :claudeClient [
         ;; ]
         ;; returns: :dictionary
         ;; example: {
-        ;;     claude: to :claudeClient ["sk-..."]
+        ;;     claude: to :claudeAPI ["sk-..."]!
         ;;     result: claude\chat [
         ;;         to :message ["user" "What is 2+2?"]
         ;;     ]
         ;;     print result\content
         ;; }
 
-        ; Validate messages
-        loop messages this\validateMessage
-
         ; Get parameters from attributes or defaults
-        model: (attr 'model) ?? this\model
+        model: (attr 'model) ?? \model
         system: attr 'system
-        temperature: (attr 'temperature) ?? this\defaultTemp
-        maxTokens: (attr 'maxTokens) ?? this\maxTokens
-        topP: (attr 'topP) ?? this\defaultTopP
+        temperature: (attr 'temperature) ?? \defaultTemp
+        maxTokens: (attr 'maxTokens) ?? \maxTokens
+        topP: (attr 'topP) ?? \defaultTopP
         topK: attr 'topK
+
+        messages: @ blk
+        ensure -> is? [:message] messages
 
         ; Build request body
         body: #[
@@ -104,11 +109,11 @@ define :claudeClient [
         result: request.post 
             .json
             .headers: #[
-                "x-api-key": this\apiKey
-                "anthropic-version": this\apiVersion
+                "x-api-key": \apiKey
+                "anthropic-version": \apiVersion
                 "content-type": "application/json"
             ]
-            this\baseUrl ++ "/v1/messages"
+            \baseUrl ++ "/v1/messages"
             body
 
         if result\status <> 200 [
@@ -122,33 +127,54 @@ define :claudeClient [
         return read.json result\body
     ]
 
+    ask: method [question :string][
+        ;; description: « Ask question directly to Claude API and get answer
+        ;; returns: :string
+        ;; example: {
+        ;;     claude: to :claudeAPI ["sk-..."]!
+        ;;     result: claude\chat [
+        ;;         to :message ["user" "What is 2+2?"]
+        ;;     ]
+        ;;     print result\content
+        ;; }
+        response: \chat [
+            createMessage "user" question
+        ]
+
+        unless key? response 'content ->
+            throw "Something went wrong"
+
+        content: first response\content
+
+        unless key? content 'type ->
+            throw "Something went wrong"
+
+        unless content\type = "text" ->
+            throw "Non-text response generated"
+
+        unless key? content 'text ->
+            throw "Something went wrong"
+
+        return content\text
+    ]
+
     setModel: method [model :string][
         ;; description: « Set default model
-        this\model: model
+        \model: model
     ]
 
     setMaxTokens: method [tokens :integer][
         ;; description: « Set default max tokens
-        this\maxTokens: tokens
+        \maxTokens: tokens
     ]
 
     setTemperature: method [temp :floating][
         ;; description: « Set default temperature
-        this\defaultTemp: temp
+        \defaultTemp: temp
     ]
 
     setTopP: method [topP :floating][
         ;; description: « Set default top_p
-        this\defaultTopP: topP
+        \defaultTopP: topP
     ]
-]
-
-;--------------------------
-; Helper Functions
-;--------------------------
-
-createMessage: function [role :string content :string][
-    ;; description: « Create a new message object
-    ;; returns: :message
-    to :message [role content]
 ]
