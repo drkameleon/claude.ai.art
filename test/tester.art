@@ -2,7 +2,7 @@ import ./"../src/api.art"!
 
 apiKey: arg\0
 
-response: chat .key: apiKey [
+response: chat .key: apiKey @[
     createMessage "user" "What is 2+2?"
 ] 
 
