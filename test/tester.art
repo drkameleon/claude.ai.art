@@ -1,10 +1,13 @@
 import ./"../src/api.art"!
 
-apiKey: arg\0
+; Initialize client with API key
+claude: to :claudeAPI @[arg\0]!
 
-response: chat .key: apiKey @[
+; Simple query
+response: claude\chat @[
     createMessage "user" "What is 2+2?"
-] 
+]
 
 inspect response
-print response\content
+
+print claude\ask "Can you explain to me what an LLM is?"
