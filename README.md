@@ -1,13 +1,14 @@
 <h1 align="center">
-    Validator
+    Claude.ai
 </h1>
 
 <p align="center">
-     <i>A 🔋-included, supercharged & customizable,<br>string validation library for Arturo</i> 
+     <i>A clean & intuitive,<br>Anthropic Claude API wrapper for Arturo</i> 
      <br><br>
-     <img src="https://img.shields.io/github/license/arturo-lang/grafito?style=for-the-badge">
+     <img src="https://img.shields.io/github/license/arturo-lang/claude-ai?style=for-the-badge">
     <img src="https://img.shields.io/badge/language-Arturo-orange.svg?style=for-the-badge">
 </p>
+
 
 --- 
  
@@ -15,7 +16,8 @@
 
 * [What does this package do?](#what-does-this-package-do)
 * [How do I use it?](#how-do-i-use-it)
-* [Function Reference](#function-reference)
+* [API Reference](#api-reference)
+* [Type Reference](#type-reference)
 * [Contributing](#contributing)
 * [License](#license)   
 
@@ -25,91 +27,121 @@
 
 ### What does this package do?
 
-This package provides a function (`valid?`) that allows to check and validate strings, based on different built-in schemes/patterns, e.g e-mails, urls, etc.
+This package provides a clean wrapper around Anthropic's Claude API, allowing you to easily integrate Claude's capabilities into your Arturo applications. It handles all the API communication, message formatting, and response parsing, providing both low-level access to the full API and convenient high-level methods for common use cases.
 
 ### How do I use it?
 
-Simply `import` it and use the included `valid?` function:
+First, make sure you have an API key from Anthropic. Then simply `import` the package and initialize a client:
 
 ```red
-import "validator"!
+import "claude.ai"!
 
-valid?.url "https://arturo-lang.io"
-; => true
+; Initialize with your API key
+claude: to :claudeAPI @["sk-your-api-key"]!
 
-valid?.email "loremIpsum@"
-; => false
+; Ask a simple question
+answer: claude\ask "What is the capital of France?"
+print answer
 
-valid?.iban "GB82 WEST 1234 5698 7654 32"
-; => true
+; Have a more complex conversation
+response: claude\chat @[
+    createMessage "user" "What's quantum computing?"
+    createMessage "assistant" "Quantum computing uses quantum mechanics..."
+    createMessage "user" "Can you explain qubits?"
+]
 
-valid?.ip "127.0.0.1"
-; => true
-
-valid?.ip.v6 "127.0.0.1"
-; => false
+; Use custom parameters
+response: claude\chat @[
+    createMessage "user" "Write a creative story"
+] .temperature: 0.9
+  .maxTokens: 2000
+  .system: "You are a creative writing expert"
 ```
 
-And we may also check more than one strings:
+### API Reference
 
-```red
-valid?.email ["my@email.com", "info@google.com"]
-; => true
-```
-
-> [!TIP]
-> Different type of checks may accept different extra params, so you'd better have a look into the reference first! 😉
-
-
-### Function reference
-
-#### `valid?`
+#### `claudeAPI`
 
 ##### Description
 
-check if given string is valid
+The main client class for interacting with Claude's API.
+
+##### Methods
+
+###### `chat`
+
+Send messages to Claude and get responses.
+
+<pre>
+<b>chat</b> <ins>messages</ins> <i>:block</i>
+</pre>
+
+**Attributes**
+
+| Option | Type | Description |
+|----|----|----|
+| model | :string | Specify Claude model to use (default: claude-3-sonnet) |
+| system | :string | Specify system message |
+| temperature | :floating | Set temperature (0.0-1.0) |
+| maxTokens | :integer | Set max tokens for response |
+| topP | :floating | Set top_p value (0.0-1.0) |
+| topK | :integer | Set top_k value |
+
+**Returns**
+- *:dictionary* - The complete API response
+
+###### `ask`
+
+Simplified method for single-turn questions.
+
+<pre>
+<b>ask</b> <ins>question</ins> <i>:string</i>
+</pre>
+
+**Returns**
+- *:string* - Claude's response text
+
+###### Configuration Methods
+
+- `setModel [model :string]` - Set default model
+- `setMaxTokens [tokens :integer]` - Set default max tokens
+- `setTemperature [temp :floating]` - Set default temperature
+- `setTopP [topP :floating]` - Set default top_p
+
+### Type Reference
+
+#### `message`
+
+##### Description
+
+Represents a single message in a conversation.
 
 ##### Usage
 
-<pre>
-<b>valid?</b> <ins>str</ins> <i>:string :block</i>
-</pre>
+```red
+msg: createMessage "user" "Hello, Claude!"
+```
 
-##### Attributes
+or
 
-| Option | Related parameters | Description |
-|----|----|----|
-| base58 | | check base-58 encoding |
-| card | | check credit card number |
-| date | | test if string contains valid date |
-| | .format: | specify date format (default: `'iso` or `yyyy-MM-dd`) - could also be one of `'iso8601`, `'short`, `'long` or any given string |
-| email | | verify e-mail address | 
-| floating | | test if string contains a parsable floating-point value |
-| integer | | test if string contains a parsable integer value |
-| iban | | verify IBAN (International Bank Account Number) |
-| ip | | verify IP addresses |
-| | .v4 | look for IPv4 addresses only |
-| | .v6 | look for IPv6 addresses only |
-| isbn | | verify ISBN code |
-| | .10 | check for ISBN-10 codes only |
-| | .13 | check for ISBN-13 codes only |
-| json | | test if string contains valid JSON |
-| | .strict | enforce stricter, two-way validation |
-| url | | verify URL |
+```red
+msg: to :message ["user" "This is my message"]
+```
 
-##### Returns
-
-- *:logical*
+##### Fields
+- `role` - Either "user" or "assistant"
+- `content` - The message content
 
 ### Contributing
 
-Validator.art has been designed with flexibility and extensibility in mind.
+Have you found a bug? Want to add a feature? Contributions are welcome! Some ideas:
+- Additional helper methods
+- Better error handling
+- Stream response support
+- Function calling support
+- Token counting utilities
 
-- Have you noticed an error and want to fix sth?
-- Do you want to add more tests to a given validator to make it more robust?
-- Do you want to add a new one (Have a look into the [sample validator](docs/sample.art)!)
-
-You are 100% welcome! Just make a PR and I'll be more than glad to merge it! 🚀
+Just make a PR and I'll be happy to review it! 🚀
 
 <hr/>
 
@@ -136,4 +168,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
- 
