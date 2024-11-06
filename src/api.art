@@ -54,11 +54,11 @@ validateApiKey: function [key :string][
     ]
 ]
 
-validateMessage: function [msg :dictionary][
-    if not? contains? msg 'role [
+validateMessage: function [msg :message][
+    if not? key? msg 'role [
         throw.as: valueError "Message must have a 'role' field"
     ]
-    if not? contains? msg 'content [
+    if not? key? msg 'content [
         throw.as: valueError "Message must have a 'content' field"
     ]
     if not? in? msg\role ["user" "assistant"] [
