@@ -1,0 +1,2 @@
+entry: {src/api.art}
+requires: [> 0.9.83]
