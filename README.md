@@ -5,7 +5,7 @@
 <p align="center">
      <i>A clean & intuitive,<br>Anthropic Claude API wrapper for Arturo</i> 
      <br><br>
-     <img src="https://img.shields.io/github/license/arturo-lang/claude-ai?style=for-the-badge">
+     <img src="https://img.shields.io/github/license/drkameleon/claude.ai.art?style=for-the-badge">
     <img src="https://img.shields.io/badge/language-Arturo-orange.svg?style=for-the-badge">
 </p>
 
@@ -18,7 +18,6 @@
 * [How do I use it?](#how-do-i-use-it)
 * [API Reference](#api-reference)
 * [Type Reference](#type-reference)
-* [Contributing](#contributing)
 * [License](#license)   
 
 <!--te-->
@@ -34,7 +33,7 @@ This package provides a clean wrapper around Anthropic's Claude API, allowing yo
 First, make sure you have an API key from Anthropic. Then simply `import` the package and initialize a client:
 
 ```red
-import "claude.ai"!
+import "claude"!
 
 ; Initialize with your API key
 claude: to :claudeAPI @["sk-your-api-key"]!
@@ -44,18 +43,20 @@ answer: claude\ask "What is the capital of France?"
 print answer
 
 ; Have a more complex conversation
-response: claude\chat @[
+response: claude\chat [
     createMessage "user" "What's quantum computing?"
     createMessage "assistant" "Quantum computing uses quantum mechanics..."
     createMessage "user" "Can you explain qubits?"
 ]
 
 ; Use custom parameters
-response: claude\chat @[
-    createMessage "user" "Write a creative story"
-] .temperature: 0.9
+response: claude\chat
+  .temperature: 0.9
   .maxTokens: 2000
   .system: "You are a creative writing expert"
+[
+    createMessage "user" "Write a creative story"
+]
 ```
 
 ### API Reference
@@ -131,17 +132,6 @@ msg: to :message ["user" "This is my message"]
 ##### Fields
 - `role` - Either "user" or "assistant"
 - `content` - The message content
-
-### Contributing
-
-Have you found a bug? Want to add a feature? Contributions are welcome! Some ideas:
-- Additional helper methods
-- Better error handling
-- Stream response support
-- Function calling support
-- Token counting utilities
-
-Just make a PR and I'll be happy to review it! 🚀
 
 <hr/>
 
