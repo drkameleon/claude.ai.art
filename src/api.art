@@ -103,7 +103,7 @@ chat: function [
     topK: (attr 'topK) ?? null
 
     ; Validate messages
-    loop messages validateMessage
+    loop messages => validateMessage
 
     ; Build request body
     body: #[
