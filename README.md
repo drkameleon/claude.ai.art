@@ -26,7 +26,7 @@
 
 ### What does this package do?
 
-This package provides a clean wrapper around Anthropic's Claude API, allowing you to easily integrate Claude's capabilities into your Arturo applications. It handles all the API communication, message formatting, and response parsing, providing both low-level access to the full API and convenient high-level methods for common use cases.
+This package provides a clean wrapper around [Anthropic's Claude API](https://www.anthropic.com/api), allowing you to easily integrate Claude's capabilities into your Arturo applications. It handles all the API communication, message formatting, and response parsing, providing both low-level access to the full API and convenient high-level methods for common use cases.
 
 ### How do I use it?
 
