@@ -1,0 +1,161 @@
+;===============================================
+; Claude.art
+;
+; Anthropic Claude API Client
+; for Arturo
+;
+; MIT License
+; (c) 2024
+;-----------------------------------------------
+
+;--------------------------
+; Configuration
+;--------------------------
+
+Claude: #[
+    ; version
+    Version: 0.1.0
+    
+    ; API configuration
+    BaseUrl: "https://api.anthropic.com"
+    ApiVersion: "2024-02-15"
+    Model: "claude-3-sonnet-20240229"
+    MaxTokens: 4096
+]
+
+;--------------------------
+; Type Definitions 
+;--------------------------
+
+define :message [
+    init: constructor [role :string content :string][
+        this\role: role
+        this\content: content
+    ]
+]
+
+define :conversation [
+    init: constructor [messages :block system :string][
+        this\messages: messages
+        this\system: system
+    ]
+]
+
+;--------------------------
+; Helper Functions
+;--------------------------
+
+validateApiKey: function [key :string][
+    if null? key [ 
+        throw.as: valueError "API key is required"
+    ]
+    if not? prefix? key "sk-" [
+        throw.as: valueError "Invalid API key format - must start with 'sk-'"
+    ]
+]
+
+validateMessage: function [msg :dictionary][
+    if not? contains? msg 'role [
+        throw.as: valueError "Message must have a 'role' field"
+    ]
+    if not? contains? msg 'content [
+        throw.as: valueError "Message must have a 'content' field"
+    ]
+    if not? in? msg\role ["user" "assistant"] [
+        throw.as: valueError "Message role must be 'user' or 'assistant'"
+    ]
+]
+
+;--------------------------
+; Main API Functions
+;--------------------------
+
+chat: function [
+    messages :block
+][
+    ;; description: « Send a chat request to Claude's API
+    ;; options: [
+    ;;     model: :string « specify Claude model to use (default: claude-3-sonnet)
+    ;;     system: :string « specify system message
+    ;;     temperature: :floating « set temperature (0.0-1.0)
+    ;;     maxTokens: :integer « set max tokens for response
+    ;;     topP: :floating « set top_p value (0.0-1.0)
+    ;;     topK: :integer « set top_k value
+    ;;     key: :string « API key (required)
+    ;; ]
+    ;; returns: :dictionary
+    ;; example: {
+    ;;     result: chat [
+    ;;         to :message ["user" "What is 2+2?"]
+    ;;     ] .key: "sk-..." 
+    ;;     
+    ;;     print result\content
+    ;; }
+    
+    apiKey: attr 'key
+    validateApiKey apiKey
+
+    model: (attr 'model) ?? Claude\Model
+    system: attr 'system
+    temperature: (attr 'temperature) ?? 0.7
+    maxTokens: (attr 'maxTokens) ?? Claude\MaxTokens
+    topP: (attr 'topP) ?? 1.0
+    topK: (attr 'topK) ?? null
+
+    ; Validate messages
+    loop messages validateMessage
+
+    ; Build request body
+    body: #[
+        model: model
+        messages: messages
+        max_tokens: maxTokens
+        temperature: temperature
+        top_p: topP
+    ]
+
+    if not? null? system [
+        set body 'system system
+    ]
+
+    if not? null? topK [
+        set body 'top_k topK
+    ]
+
+    ; Make API request
+    result: request.post 
+        .json
+        .headers: #[
+            "x-api-key": apiKey
+            "anthropic-version": Claude\ApiVersion
+            "content-type": "application/json"
+        ]
+        join.path @[Claude\BaseUrl "v1/messages"]
+        body
+
+    if result\status <> 200 [
+        throw.as: runtimeError join @[
+            "API request failed with status" 
+            result\status ":" 
+            read.json result\body
+        ]
+    ]
+
+    return read.json result\body
+]
+
+;--------------------------
+; Helper Functions
+;--------------------------
+
+createMessage: function [role :string content :string][
+    ;; description: « Create a new message object
+    ;; returns: :message
+    to :message [role content]
+]
+
+createConversation: function [messages :block system :string][
+    ;; description: « Create a new conversation object
+    ;; returns: :conversation
+    to :conversation [messages system]
+]
