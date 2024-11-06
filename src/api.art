@@ -18,7 +18,7 @@ Claude: #[
     
     ; API configuration
     BaseUrl: "https://api.anthropic.com"
-    ApiVersion: "2024-02-15"
+    ApiVersion: "2023-06-01"
     Model: "claude-3-sonnet-20240229"
     MaxTokens: 4096
 ]
@@ -130,7 +130,7 @@ chat: function [
             "anthropic-version": Claude\ApiVersion
             "content-type": "application/json"
         ]
-        join.path @[Claude\BaseUrl "v1/messages"]
+        Claude\BaseUrl ++ "/v1/messages"
         body
 
     if result\status <> 200 [
