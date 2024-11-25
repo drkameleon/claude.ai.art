@@ -132,10 +132,8 @@ define :claudeAPI [
         ;; returns: :string
         ;; example: {
         ;;     claude: to :claudeAPI ["sk-..."]!
-        ;;     result: claude\chat [
-        ;;         to :message ["user" "What is 2+2?"]
-        ;;     ]
-        ;;     print result\content
+        ;;     print claude\ask "What is the capital of Sweden?" 
+        ;;     ; The capital of Sweden is Stockholm.
         ;; }
         response: \chat [
             createMessage "user" question
