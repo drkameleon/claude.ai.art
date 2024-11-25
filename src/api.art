@@ -15,7 +15,7 @@
 ;--------------------------
 
 define :message [
-    init: constructor [role :string content :string][
+    init: method [role :string content :string][
         \role: role
         \content: content
 
