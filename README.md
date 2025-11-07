@@ -81,7 +81,7 @@ Send messages to Claude and get responses.
 
 | Option | Type | Description |
 |----|----|----|
-| model | :string | Specify Claude model to use (default: claude-3-sonnet) |
+| model | :string | Specify Claude model to use (default: claude-sonnet-4-5-20250929) |
 | system | :string | Specify system message |
 | temperature | :floating | Set temperature (0.0-1.0) |
 | maxTokens | :integer | Set max tokens for response |
