@@ -50,7 +50,7 @@ define :claudeAPI [
         \apiKey: key
         \baseUrl: "https://api.anthropic.com"
         \apiVersion: "2023-06-01"
-        \model: "claude-3-sonnet-20240229"
+        \model: "claude-sonnet-4-5-20250929"
         \maxTokens: 4096
 
         ; default parameters
