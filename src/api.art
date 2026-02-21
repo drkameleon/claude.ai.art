@@ -40,6 +40,10 @@ createMessage: function [role :string content :string][
 
 define :claudeAPI [
     init: method [key :string][
+        ;; options: [
+        ;;     opus: :logical « use Claude Opus model
+        ;;     haiku: :logical « use Claude Haiku model
+        ;; ]
         if null? key [ 
             throw.as: valueError "API key is required"
         ]
@@ -50,8 +54,11 @@ define :claudeAPI [
         \apiKey: key
         \baseUrl: "https://api.anthropic.com"
         \apiVersion: "2023-06-01"
-        \model: "claude-sonnet-4-6"
         \maxTokens: 8192
+        
+        \model: "claude-sonnet-4-6"
+        if attr? 'opus  -> \model: "claude-opus-4-6"
+        if attr? 'haiku -> \model: "claude-haiku-4-5-20251001"
 
         ; default parameters
         \defaultTemp: 0.7
