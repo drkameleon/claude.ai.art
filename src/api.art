@@ -61,7 +61,7 @@ define :claudeAPI [
     chat: method [blk :block][
         ;; description: « Send a chat request to Claude's API
         ;; options: [
-        ;;     model: :string « specify Claude model to use (default: claude-3-sonnet)
+        ;;     model: :string « specify Claude model to use (default: claude-sonnet-4-6)
         ;;     system: :string « specify system message
         ;;     temperature: :floating « set temperature (0.0-1.0)
         ;;     maxTokens: :integer « set max tokens for response
