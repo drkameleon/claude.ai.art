@@ -35,7 +35,7 @@ First, make sure you have an API key from Anthropic. Then simply `import` the pa
 ```red
 import "claude"!
 
-; Initialize with your API key
+; Initialize with your API key (defaults to Sonnet 4.6)
 claude: to :claudeAPI @["sk-your-api-key"]!
 
 ; Ask a simple question
@@ -59,6 +59,21 @@ response: claude\chat
 ]
 ```
 
+#### Model Selection
+
+By default, the client uses **Claude Sonnet 4.6**. You can select a different model family at initialization using attributes:
+
+```red
+; Use Claude Opus 4.6
+claude: to .opus :claudeAPI @["sk-your-api-key"]!
+
+; Use Claude Haiku 4.5
+claude: to .haiku :claudeAPI @["sk-your-api-key"]!
+```
+
+> [!TIP]
+> You can also change the model at any time after initialization using `setModel`, or override it per-request via the `.model` attribute on `chat`.
+
 ### API Reference
 
 #### `claudeAPI`
@@ -66,6 +81,22 @@ response: claude\chat
 ##### Description
 
 The main client class for interacting with Claude's API.
+
+##### Initialization
+
+<pre>
+<b>to</b> <i>:claudeAPI</i> [<ins>key</ins> <i>:string</i>]
+</pre>
+
+**Attributes**
+
+| Option | Type | Description |
+|----|----|----|
+| opus | :logical | Use Claude Opus 4.6 |
+| haiku | :logical | Use Claude Haiku 4.5 |
+
+> [!NOTE]
+> If neither `.opus` nor `.haiku` is specified, the client defaults to **Claude Sonnet 4.6** (`claude-sonnet-4-6`).
 
 ##### Methods
 
