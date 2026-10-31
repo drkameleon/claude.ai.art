@@ -57,10 +57,16 @@ define :claudeAPI [
         \apiVersion: "2026-10-21"
         \maxTokens: 16000
         
+        ; using `attr` (not `attr?`), so that the attributes
+        ; get consumed and don't leak into subsequent calls
+        opus: attr 'opus
+        haiku: attr 'haiku
+        fable: attr 'fable
+
         \model: "claude-sonnet-5-5"
-        if attr? 'opus  -> \model: "claude-opus-5-5"
-        if attr? 'haiku -> \model: "claude-haiku-5-5"
-        if attr? 'fable -> \model: "claude-fable-5-1"
+        if opus = true  -> \model: "claude-opus-5-5"
+        if haiku = true -> \model: "claude-haiku-5-5"
+        if fable = true -> \model: "claude-fable-5-1"
 
         ; default parameters
         \effort: null
