@@ -43,6 +43,7 @@ define :claudeAPI [
         ;; options: [
         ;;     opus: :logical « use Claude Opus model
         ;;     haiku: :logical « use Claude Haiku model
+        ;;     fable: :logical « use Claude Fable model
         ;; ]
         if null? key [ 
             throw.as: valueError "API key is required"
@@ -53,27 +54,32 @@ define :claudeAPI [
 
         \apiKey: key
         \baseUrl: "https://api.anthropic.com"
-        \apiVersion: "2023-06-01"
-        \maxTokens: 8192
+        \apiVersion: "2026-10-21"
+        \maxTokens: 16000
         
-        \model: "claude-sonnet-4-6"
-        if attr? 'opus  -> \model: "claude-opus-4-6"
-        if attr? 'haiku -> \model: "claude-haiku-4-5-20251001"
+        ; using `attr` (not `attr?`), so that the attributes
+        ; get consumed and don't leak into subsequent calls
+        opus: attr 'opus
+        haiku: attr 'haiku
+        fable: attr 'fable
+
+        \model: "claude-sonnet-5-5"
+        if opus = true  -> \model: "claude-opus-5-5"
+        if haiku = true -> \model: "claude-haiku-5-5"
+        if fable = true -> \model: "claude-fable-5-1"
 
         ; default parameters
-        \defaultTemp: 0.7
-        \defaultTopP: 1.0
+        \effort: null
+        \fallback: true
     ]
 
     chat: method [blk :block][
         ;; description: « Send a chat request to Claude's API
         ;; options: [
-        ;;     model: :string « specify Claude model to use (default: claude-sonnet-4-6)
+        ;;     model: :string « specify Claude model to use (default: claude-sonnet-5-5)
         ;;     system: :string « specify system message
-        ;;     temperature: :floating « set temperature (0.0-1.0)
         ;;     maxTokens: :integer « set max tokens for response
-        ;;     topP: :floating « set top_p value (0.0-1.0)
-        ;;     topK: :integer « set top_k value
+        ;;     effort: :string « set effort level (low, medium, high, xhigh, max)
         ;; ]
         ;; returns: :dictionary
         ;; example: {
@@ -87,10 +93,8 @@ define :claudeAPI [
         ; Get parameters from attributes or defaults
         model: (attr 'model) ?? \model
         system: attr 'system
-        temperature: (attr 'temperature) ?? \defaultTemp
         maxTokens: (attr 'maxTokens) ?? \maxTokens
-        topP: (attr 'topP) ?? \defaultTopP
-        topK: attr 'topK
+        effort: (attr 'effort) ?? \effort
 
         messages: @ blk
         ensure -> is? [:message] messages
@@ -100,35 +104,40 @@ define :claudeAPI [
             model: model
             messages: messages
             max_tokens: maxTokens
-            temperature: temperature
-            top_p: topP
         ]
 
         if not? null? system [
             set body 'system system
         ]
 
-        if not? null? topK [
-            set body 'top_k topK
+        if not? null? effort [
+            if not? in? effort ["low" "medium" "high" "xhigh" "max"] ->
+                throw.as: valueError "Effort must be one of: low, medium, high, xhigh, max"
+            set body 'output_config #[effort: effort]
+        ]
+
+        headers: #[
+            "x-api-key": \apiKey
+            "anthropic-version": \apiVersion
+            "content-type": "application/json"
+        ]
+
+        ; Server-side fallback when a request is declined
+        ; (only supported by some models)
+        if and? [\fallback] [in? model ["claude-fable-5-1" "claude-opus-5-5" "claude-opus-5" "claude-sonnet-5-5"]][
+            set headers "anthropic-beta" "server-side-fallback-2026-07-01"
+            set body 'fallbacks "default"
         ]
 
         ; Make API request
         result: request.post 
             .json
-            .headers: #[
-                "x-api-key": \apiKey
-                "anthropic-version": \apiVersion
-                "content-type": "application/json"
-            ]
+            .headers: headers
             \baseUrl ++ "/v1/messages"
             body
 
         if result\status <> 200 [
-            throw.as: runtimeError join @[
-                "API request failed with status" 
-                result\status ":" 
-                read.json result\body
-            ]
+            throw.as: runtimeError ~"API request failed with status |result\status|: |result\body|"
         ]
 
         return read.json result\body
@@ -149,18 +158,18 @@ define :claudeAPI [
         unless key? response 'content ->
             throw "Something went wrong"
 
-        content: first response\content
+        if and? [key? response 'stop_reason] [response\stop_reason = "refusal"] ->
+            throw "Request was declined by the model"
 
-        unless key? content 'type ->
-            throw "Something went wrong"
+        ; Responses may also contain thinking blocks,
+        ; so we only keep the text ones
+        texts: select response\content 'block ->
+            and? [key? block 'type] [block\type = "text"]
 
-        unless content\type = "text" ->
+        if empty? texts ->
             throw "Non-text response generated"
 
-        unless key? content 'text ->
-            throw "Something went wrong"
-
-        return content\text
+        return join map texts 'block -> block\text
     ]
 
     setModel: method [model :string][
@@ -173,13 +182,13 @@ define :claudeAPI [
         \maxTokens: tokens
     ]
 
-    setTemperature: method [temp :floating][
-        ;; description: « Set default temperature
-        \defaultTemp: temp
+    setEffort: method [effort :string][
+        ;; description: « Set default effort level (low, medium, high, xhigh, max)
+        \effort: effort
     ]
 
-    setTopP: method [topP :floating][
-        ;; description: « Set default top_p
-        \defaultTopP: topP
+    setFallback: method [enabled :logical][
+        ;; description: « Enable/disable server-side model fallback on declined requests
+        \fallback: enabled
     ]
 ]
