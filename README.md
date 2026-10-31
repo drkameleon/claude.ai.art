@@ -35,7 +35,7 @@ First, make sure you have an API key from Anthropic. Then simply `import` the pa
 ```red
 import "claude"!
 
-; Initialize with your API key (defaults to Sonnet 4.6)
+; Initialize with your API key (defaults to Sonnet 5.5)
 claude: to :claudeAPI @["sk-your-api-key"]!
 
 ; Ask a simple question
@@ -51,7 +51,7 @@ response: claude\chat [
 
 ; Use custom parameters
 response: claude\chat
-  .temperature: 0.9
+  .effort: "high"
   .maxTokens: 2000
   .system: "You are a creative writing expert"
 [
@@ -61,14 +61,17 @@ response: claude\chat
 
 #### Model Selection
 
-By default, the client uses **Claude Sonnet 4.6**. You can select a different model family at initialization using attributes:
+By default, the client uses **Claude Sonnet 5.5**. You can select a different model family at initialization using attributes:
 
 ```red
-; Use Claude Opus 4.6
+; Use Claude Opus 5.5
 claude: to .opus :claudeAPI @["sk-your-api-key"]!
 
-; Use Claude Haiku 4.5
+; Use Claude Haiku 5.5
 claude: to .haiku :claudeAPI @["sk-your-api-key"]!
+
+; Use Claude Fable 5.1
+claude: to .fable :claudeAPI @["sk-your-api-key"]!
 ```
 
 > [!TIP]
@@ -92,11 +95,12 @@ The main client class for interacting with Claude's API.
 
 | Option | Type | Description |
 |----|----|----|
-| opus | :logical | Use Claude Opus 4.6 |
-| haiku | :logical | Use Claude Haiku 4.5 |
+| opus | :logical | Use Claude Opus 5.5 |
+| haiku | :logical | Use Claude Haiku 5.5 |
+| fable | :logical | Use Claude Fable 5.1 |
 
 > [!NOTE]
-> If neither `.opus` nor `.haiku` is specified, the client defaults to **Claude Sonnet 4.6** (`claude-sonnet-4-6`).
+> If none of `.opus`, `.haiku` or `.fable` is specified, the client defaults to **Claude Sonnet 5.5** (`claude-sonnet-5-5`).
 
 ##### Methods
 
@@ -112,12 +116,13 @@ Send messages to Claude and get responses.
 
 | Option | Type | Description |
 |----|----|----|
-| model | :string | Specify Claude model to use (default: claude-sonnet-4-6) |
+| model | :string | Specify Claude model to use (default: claude-sonnet-5-5) |
 | system | :string | Specify system message |
-| temperature | :floating | Set temperature (0.0-1.0) |
-| maxTokens | :integer | Set max tokens for response |
-| topP | :floating | Set top_p value (0.0-1.0) |
-| topK | :integer | Set top_k value |
+| maxTokens | :integer | Set max tokens for response (default: 16000) |
+| effort | :string | Set effort level: `low`, `medium`, `high`, `xhigh` or `max` |
+
+> [!NOTE]
+> Current models no longer accept sampling parameters (`temperature`, `top_p`, `top_k`); use `.effort` to trade off response depth against speed and cost.
 
 **Returns**
 - *:dictionary* - The complete API response
@@ -137,8 +142,8 @@ Simplified method for single-turn questions.
 
 - `setModel [model :string]` - Set default model
 - `setMaxTokens [tokens :integer]` - Set default max tokens
-- `setTemperature [temp :floating]` - Set default temperature
-- `setTopP [topP :floating]` - Set default top_p
+- `setEffort [effort :string]` - Set default effort level
+- `setFallback [enabled :logical]` - Enable/disable automatic server-side fallback to another model when a request is declined (on by default; used with Opus 5.5, Sonnet 5.5 and Fable 5.1)
 
 ### Type Reference
 
